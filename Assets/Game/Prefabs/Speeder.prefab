@@ -9,6 +9,18 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.17456588
       objectReference: {fileID: 0}
@@ -22,7 +34,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_LocalRotation.x
@@ -30,11 +42,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -46,7 +58,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
+      value: 90
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_Name
@@ -65,6 +77,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4524072502934457515}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2769709239416814129}
   m_SourcePrefab: {fileID: 100100000, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
 --- !u!1 &5586553699231712546 stripped
 GameObject:
@@ -117,8 +132,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2, y: 1, z: 4}
-  m_Center: {x: 0, y: 0.5, z: 0}
+  m_Size: {x: 0.15, y: 0.045, z: 0.09}
+  m_Center: {x: 0, y: 0.02, z: 0}
 --- !u!114 &4524072502934457515
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -146,3 +161,33 @@ MonoBehaviour:
     m_Bits: 4294967295
   drag: 2
   angularDrag: 3
+--- !u!114 &2769709239416814129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5586553699231712546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
+  m_Actions: {fileID: -944628639613478452, guid: 8c4d89694cf5309419b025d12c850fb9, type: 3}
+  m_NotificationBehavior: 0
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents: []
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: 
+  m_DefaultActionMap: Speeder
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 0}

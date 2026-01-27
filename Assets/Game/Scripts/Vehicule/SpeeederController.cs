@@ -1,7 +1,8 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody))]
-public class SpeeederController : MonoBehaviour
+public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpeederActions
 {
     [Header("Movement Settings")]
     [SerializeField] private float accelerationForce = 50f;
@@ -27,6 +28,7 @@ public class SpeeederController : MonoBehaviour
     private Rigidbody rb;
     private Vector2 moveInput;
     private float currentTilt;
+    private InputAction_PlayerControl controls;
 
     private void Awake()
     {
@@ -34,11 +36,36 @@ public class SpeeederController : MonoBehaviour
         rb.useGravity = false;
         rb.linearDamping = drag;
         rb.angularDamping = angularDrag;
+        
+        controls = new InputAction_PlayerControl();
+        controls.Speeder.SetCallbacks(this);
+        
+        Debug.Log("[Speeder] InputAction_PlayerControl initialisé");
     }
 
-    private void Update()
+    private void Start()
     {
-        ReadInput();
+        Debug.Log($"[Speeder] Démarrage - Position: {transform.position}, Rotation: {transform.rotation.eulerAngles}");
+        Debug.Log($"[Speeder] Forward: {transform.forward}");
+        Debug.Log($"[Speeder] Right: {transform.right}");
+        Debug.Log($"[Speeder] Back: {-transform.forward}");
+        Debug.Log($"[Speeder] Left: {-transform.right}");
+        Debug.Log($"[Speeder] Up: {transform.up}");
+    }
+
+    private void OnEnable()
+    {
+        controls.Speeder.Enable();
+    }
+
+    private void OnDisable()
+    {
+        controls.Speeder.Disable();
+    }
+
+    private void OnDestroy()
+    {
+        controls.Dispose();
     }
 
     private void FixedUpdate()
@@ -50,70 +77,81 @@ public class SpeeederController : MonoBehaviour
         LimitSpeed();
     }
 
-    private void ReadInput()
+    public void OnMove(InputAction.CallbackContext context)
     {
-        float horizontal = 0f;
-        float vertical = 0f;
+        moveInput = context.ReadValue<Vector2>();
         
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.Z)) vertical = 1f;
-        if (Input.GetKey(KeyCode.S)) vertical = -1f;
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.Q)) horizontal = -1f;
-        if (Input.GetKey(KeyCode.D)) horizontal = 1f;
-        
-        moveInput = new Vector2(horizontal, vertical);
+        if (Mathf.Abs(moveInput.x) > 0.1f || Mathf.Abs(moveInput.y) > 0.1f)
+        {
+            Debug.Log($"[Speeder OnMove] Input reçu - X (steer): {moveInput.x:F2}, Y (throttle): {moveInput.y:F2}");
+        }
     }
 
     private void ApplyHoverForce()
     {
         if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, hoverHeight * 2f, groundLayer))
         {
-            float distanceToGround = hit.distance;
-            float hoverError = hoverHeight - distanceToGround;
-            float upwardForce = hoverError * hoverForce - rb.linearVelocity.y * hoverDamping;
-            
-            rb.AddForce(Vector3.up * upwardForce, ForceMode.Acceleration);
+            float distanceRatio = hit.distance / hoverHeight;
+            float force = (1f - distanceRatio) * hoverForce;
+            Vector3 dampingForce = -rb.linearVelocity.y * Vector3.up * hoverDamping;
+            rb.AddForce((Vector3.up * force + dampingForce), ForceMode.Acceleration);
         }
     }
 
     private void ApplyMovement()
     {
-        float throttle = moveInput.y;
+        // INVERSION: Z doit avancer (+1) et S reculer (-1)
+        float throttle = -moveInput.y;
         
-        if (throttle > 0)
+        // FIX: Utiliser -right car right pointe vers l'arrière (Z-)
+        Vector3 moveDirection = -transform.right;
+        
+        if (Mathf.Abs(throttle) > 0.1f)
         {
-            rb.AddForce(transform.forward * throttle * accelerationForce, ForceMode.Acceleration);
+            Debug.Log($"[ApplyMovement] throttle={throttle:F2}, moveDir={moveDirection}, speed={rb.linearVelocity.magnitude:F2}");
         }
-        else if (throttle < 0)
+        
+        if (throttle > 0f)
         {
-            float forwardSpeed = Vector3.Dot(rb.linearVelocity, transform.forward);
-            
-            if (forwardSpeed > 0.5f)
+            rb.AddForce(moveDirection * throttle * accelerationForce, ForceMode.Acceleration);
+        }
+        else if (throttle < 0f)
+        {
+            float currentForwardSpeed = Vector3.Dot(rb.linearVelocity, moveDirection);
+            if (currentForwardSpeed > 0.5f)
             {
-                rb.AddForce(-transform.forward * brakeForce, ForceMode.Acceleration);
+                rb.AddForce(-moveDirection * brakeForce, ForceMode.Acceleration);
             }
             else
             {
-                rb.AddForce(transform.forward * throttle * reverseForce, ForceMode.Acceleration);
+                rb.AddForce(moveDirection * throttle * reverseForce, ForceMode.Acceleration);
             }
         }
     }
 
     private void ApplyRotation()
     {
-        float turn = moveInput.x;
+        float horizontal = moveInput.x;
+        float currentSpeed = rb.linearVelocity.magnitude;
         
-        if (Mathf.Abs(turn) > 0.01f)
+        // Permettre rotation même à faible vitesse, mais augmenter avec la vitesse
+        float speedFactor = Mathf.Clamp01(0.3f + (currentSpeed / 10f));
+        float turnAmount = horizontal * turnSpeed * speedFactor * Time.fixedDeltaTime;
+        
+        if (Mathf.Abs(horizontal) > 0.1f)
         {
-            float turnAmount = turn * turnSpeed * Time.fixedDeltaTime;
-            Quaternion turnRotation = Quaternion.Euler(0f, turnAmount, 0f);
-            rb.MoveRotation(rb.rotation * turnRotation);
+            Debug.Log($"[Rotation] horizontal={horizontal:F2}, speed={currentSpeed:F2}, speedFactor={speedFactor:F2}, turnAmount={turnAmount:F2}");
         }
+        
+        // Tourner autour de l'axe UP du véhicule, pas l'axe Y mondial
+        Quaternion deltaRotation = Quaternion.AngleAxis(turnAmount, transform.up);
+        rb.MoveRotation(rb.rotation * deltaRotation);
     }
 
     private void ApplyTilt()
     {
         float targetTilt = -moveInput.x * tiltAngle;
-        currentTilt = Mathf.Lerp(currentTilt, targetTilt, Time.fixedDeltaTime * tiltSpeed);
+        currentTilt = Mathf.Lerp(currentTilt, targetTilt, tiltSpeed * Time.fixedDeltaTime);
         
         Vector3 currentEuler = transform.localEulerAngles;
         currentEuler.z = currentTilt;
@@ -133,6 +171,6 @@ public class SpeeederController : MonoBehaviour
 
     public float GetNormalizedSpeed()
     {
-        return rb.linearVelocity.magnitude / maxSpeed;
+        return Mathf.Clamp01(rb.linearVelocity.magnitude / maxSpeed);
     }
 }
