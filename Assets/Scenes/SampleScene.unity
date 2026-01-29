@@ -455,6 +455,79 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1001 &579755715
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1721.3398
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1721.3398
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1721.3398
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -30.8
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 12.5
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 13.7
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.2661739
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.2661739
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.6550966
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.6550965
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 135.775
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 60af0d2b0420c044eb6765c547a27b84, type: 2}
+    - target: {fileID: 919132149155446097, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
+      propertyPath: m_Name
+      value: Meshy_AI_Desert_Rock_1_0129191547_texture
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 5667444c0a4ecec4cacb946ff5604ef1, type: 3}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -629,20 +702,24 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4524072502934457515, guid: ede34b516d666f443963f6ced76a677a, type: 3}
+      propertyPath: maxSpeed
+      value: 35
+      objectReference: {fileID: 0}
+    - target: {fileID: 4524072502934457515, guid: ede34b516d666f443963f6ced76a677a, type: 3}
       propertyPath: turnSpeed
-      value: 150
+      value: 120
       objectReference: {fileID: 0}
     - target: {fileID: 4524072502934457515, guid: ede34b516d666f443963f6ced76a677a, type: 3}
       propertyPath: brakeForce
-      value: 80
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 4524072502934457515, guid: ede34b516d666f443963f6ced76a677a, type: 3}
       propertyPath: reverseForce
-      value: 80
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 4524072502934457515, guid: ede34b516d666f443963f6ced76a677a, type: 3}
       propertyPath: accelerationForce
-      value: 600
+      value: 80
       objectReference: {fileID: 0}
     - target: {fileID: 5101659534047944600, guid: ede34b516d666f443963f6ced76a677a, type: 3}
       propertyPath: m_LocalScale.x
@@ -723,3 +800,4 @@ SceneRoots:
   - {fileID: 330019207}
   - {fileID: 2004377233}
   - {fileID: 986251296}
+  - {fileID: 579755715}
