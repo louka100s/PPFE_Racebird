@@ -145,7 +145,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 286343120}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 0.7001711, z: -0, w: 0.7139751}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -729,6 +729,10 @@ PrefabInstance:
       value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 4524072502934457515, guid: ede34b516d666f443963f6ced76a677a, type: 3}
+      propertyPath: rollSpeed
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4524072502934457515, guid: ede34b516d666f443963f6ced76a677a, type: 3}
       propertyPath: turnSpeed
       value: 120
       objectReference: {fileID: 0}
@@ -737,16 +741,28 @@ PrefabInstance:
       value: 80
       objectReference: {fileID: 0}
     - target: {fileID: 4524072502934457515, guid: ede34b516d666f443963f6ced76a677a, type: 3}
+      propertyPath: maxVisualYaw
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 4524072502934457515, guid: ede34b516d666f443963f6ced76a677a, type: 3}
       propertyPath: reverseForce
-      value: 15
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 4524072502934457515, guid: ede34b516d666f443963f6ced76a677a, type: 3}
+      propertyPath: maxPitchAngle
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 4524072502934457515, guid: ede34b516d666f443963f6ced76a677a, type: 3}
       propertyPath: visualTransform
       value: 
       objectReference: {fileID: 286343121}
     - target: {fileID: 4524072502934457515, guid: ede34b516d666f443963f6ced76a677a, type: 3}
+      propertyPath: maxDiagonalTwist
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4524072502934457515, guid: ede34b516d666f443963f6ced76a677a, type: 3}
       propertyPath: accelerationForce
-      value: 200
+      value: 90
       objectReference: {fileID: 0}
     - target: {fileID: 5101659534047944600, guid: ede34b516d666f443963f6ced76a677a, type: 3}
       propertyPath: m_LocalScale.x
@@ -762,7 +778,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5101659534047944600, guid: ede34b516d666f443963f6ced76a677a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.14
+      value: -1.8
       objectReference: {fileID: 0}
     - target: {fileID: 5101659534047944600, guid: ede34b516d666f443963f6ced76a677a, type: 3}
       propertyPath: m_LocalPosition.y

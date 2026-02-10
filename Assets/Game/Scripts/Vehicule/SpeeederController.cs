@@ -35,7 +35,9 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
     
     [Header("Visual Roll")]
     [SerializeField] private float maxRollAngle = 20f;
-    [SerializeField] private float rollSpeed = 6f;
+    [SerializeField] private float maxPitchAngle = 8f;
+    [SerializeField] private float maxVisualYaw = 12f;
+    [SerializeField] private float maxDiagonalTwist = 6f;
     [SerializeField] private Transform visualTransform;
     
     private Rigidbody rb;
@@ -43,6 +45,13 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
     private InputAction_PlayerControl controls;
     private float currentAngularVelocity;
     private float currentRollAngle = 0f;
+    private float currentPitchAngle = 0f;
+    private float currentVisualYaw = 0f;
+    private float currentDiagonalTwist = 0f;
+    private float rollVelocity = 0f;
+    private float pitchVelocity = 0f;
+    private float yawVelocity = 0f;
+    private float diagonalVelocity = 0f;
 
     private void Awake()
     {
@@ -110,7 +119,7 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
     {
         float throttle = moveInput.y;
         
-        Vector3 forward = transform.forward;
+        Vector3 forward = transform.right;
         forward.y = 0f;
         forward.Normalize();
         
@@ -184,7 +193,7 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
 
         if (currentSpeed < minDriftSpeed) return;
 
-        Vector3 forward = transform.forward;
+        Vector3 forward = transform.right;
         forward.y = 0f;
         forward.Normalize();
 
@@ -193,7 +202,7 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
 
         if (Mathf.Abs(driftAngle) < 1f) return;
 
-        Vector3 lateralDirection = transform.right;
+        Vector3 lateralDirection = -transform.forward;
         lateralDirection.y = 0f;
         lateralDirection.Normalize();
 
@@ -210,20 +219,34 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
     /// </summary>
     private void ApplyVisualRoll()
     {
-        if (visualTransform == null)
-        {
-            Debug.LogWarning("VisualTransform non assigné!");
-            return;
-        }
+        if (visualTransform == null) return;
 
         Vector3 horizontalVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
         float currentSpeed = horizontalVelocity.magnitude;
         float speedRatio = Mathf.Clamp01(currentSpeed / maxSpeed);
 
-        float targetRoll = -moveInput.x * maxRollAngle * speedRatio;
-        currentRollAngle = Mathf.Lerp(currentRollAngle, targetRoll, rollSpeed * Time.fixedDeltaTime);
+        float visualFactor = Mathf.Pow(speedRatio, 2.0f);
 
-        visualTransform.localRotation = Quaternion.Euler(currentRollAngle, 0f, 0f);
+        float turnInput = moveInput.x;
+
+        float targetRoll = -turnInput * maxRollAngle * visualFactor;
+        currentRollAngle = Mathf.SmoothDamp(currentRollAngle, targetRoll, ref rollVelocity, 0.12f);
+
+        float targetPitch = Mathf.Abs(turnInput) * maxPitchAngle * visualFactor;
+        currentPitchAngle = Mathf.SmoothDamp(currentPitchAngle, targetPitch, ref pitchVelocity, 0.25f);
+
+        float targetYaw = -turnInput * maxVisualYaw * visualFactor;
+        currentVisualYaw = Mathf.SmoothDamp(currentVisualYaw, targetYaw, ref yawVelocity, 0.25f);
+
+        float targetDiagonalTwist = turnInput * maxDiagonalTwist * visualFactor;
+        currentDiagonalTwist = Mathf.SmoothDamp(currentDiagonalTwist, targetDiagonalTwist, ref diagonalVelocity, 0.15f);
+
+        Quaternion rollRot = Quaternion.AngleAxis(currentRollAngle, Vector3.right);
+        Quaternion pitchRot = Quaternion.AngleAxis(currentPitchAngle, Vector3.up);
+        Quaternion yawRot = Quaternion.AngleAxis(currentVisualYaw, Vector3.forward);
+        Quaternion diagonalRot = Quaternion.AngleAxis(currentDiagonalTwist, Vector3.back);
+
+        visualTransform.localRotation = rollRot * pitchRot * yawRot * diagonalRot;
     }
 
     /// <summary>
