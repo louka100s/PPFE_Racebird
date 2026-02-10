@@ -5,9 +5,9 @@ using UnityEngine.InputSystem;
 public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpeederActions
 {
     [Header("Movement Settings")]
-    [SerializeField] private float accelerationForce = 80f;
-    [SerializeField] private float maxSpeed = 35f;
-    [SerializeField] private float brakeForce = 40f;
+    [SerializeField] private float accelerationForce = 200f;
+    [SerializeField] private float maxSpeed = 100f;
+    [SerializeField] private float brakeForce = 80f;
     [SerializeField] private float reverseForce = 30f;
     
     [Header("Rotation Settings")]
@@ -24,13 +24,25 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
     [SerializeField] private LayerMask groundLayer = -1;
     
     [Header("Physics Settings")]
-    [SerializeField] private float drag = 2f;
+    [SerializeField] private float drag = 0.5f;
     [SerializeField] private float angularDrag = 3f;
+    
+    [Header("Drift Settings")]
+    [Range(0f, 1f)]
+    [SerializeField] private float lateralGrip = 0.75f;
+    [SerializeField] private float driftForce = 45f;
+    [SerializeField] private float minDriftSpeed = 5f;
+    
+    [Header("Visual Roll")]
+    [SerializeField] private float maxRollAngle = 20f;
+    [SerializeField] private float rollSpeed = 6f;
+    [SerializeField] private Transform visualTransform;
     
     private Rigidbody rb;
     private Vector2 moveInput;
     private InputAction_PlayerControl controls;
     private float currentAngularVelocity;
+    private float currentRollAngle = 0f;
 
     private void Awake()
     {
@@ -63,7 +75,9 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
         ApplyHoverForce();
         ApplyMovement();
         ApplyRotation();
+        ApplyDrift();
         LimitSpeed();
+        ApplyVisualRoll();
     }
 
     /// <summary>
@@ -94,39 +108,35 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
     /// </summary>
     private void ApplyMovement()
     {
-        float throttle = -moveInput.y;
+        float throttle = moveInput.y;
         
-        // Direction forward du speeder, projetée sur le plan horizontal pour éviter toute force verticale
-        Vector3 forwardDirection = -transform.right;
-        forwardDirection.y = 0f;
-        forwardDirection.Normalize();
+        Vector3 forward = transform.forward;
+        forward.y = 0f;
+        forward.Normalize();
         
         if (throttle > 0f)
         {
-            rb.AddForce(forwardDirection * throttle * accelerationForce, ForceMode.Acceleration);
+            rb.AddForce(forward * throttle * accelerationForce, ForceMode.Acceleration);
         }
         else if (throttle < 0f)
         {
-            float currentForwardSpeed = Vector3.Dot(rb.linearVelocity, forwardDirection);
+            float currentForwardSpeed = Vector3.Dot(rb.linearVelocity, forward);
             if (currentForwardSpeed > 0.5f)
             {
-                rb.AddForce(-forwardDirection * brakeForce, ForceMode.Acceleration);
+                rb.AddForce(-forward * brakeForce, ForceMode.Acceleration);
             }
             else
             {
-                rb.AddForce(forwardDirection * throttle * reverseForce, ForceMode.Acceleration);
+                rb.AddForce(forward * throttle * reverseForce, ForceMode.Acceleration);
             }
         }
         
-        // Réduit la vélocité latérale sur le plan horizontal uniquement
         Vector3 horizontalVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-        Vector3 forwardVelocity = Vector3.Project(horizontalVelocity, forwardDirection);
+        Vector3 forwardVelocity = Vector3.Project(horizontalVelocity, forward);
         Vector3 lateralVelocity = horizontalVelocity - forwardVelocity;
         
-        // Réduit 90% de la glissade latérale pour un comportement arcade
         lateralVelocity *= 0.1f;
         
-        // Reconstruit la vélocité : forward + latéral réduit + Y préservé
         rb.linearVelocity = forwardVelocity + lateralVelocity + Vector3.up * rb.linearVelocity.y;
     }
 
@@ -162,6 +172,58 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
             Quaternion deltaRotation = Quaternion.AngleAxis(rotationThisFrame, Vector3.up);
             rb.MoveRotation(rb.rotation * deltaRotation);
         }
+    }
+
+    /// <summary>
+    /// Applique le système de drift latéral basé sur l'angle entre direction et vélocité
+    /// </summary>
+    private void ApplyDrift()
+    {
+        Vector3 horizontalVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        float currentSpeed = horizontalVelocity.magnitude;
+
+        if (currentSpeed < minDriftSpeed) return;
+
+        Vector3 forward = transform.forward;
+        forward.y = 0f;
+        forward.Normalize();
+
+        Vector3 velocityDirection = horizontalVelocity.normalized;
+        float driftAngle = Vector3.SignedAngle(forward, velocityDirection, Vector3.up);
+
+        if (Mathf.Abs(driftAngle) < 1f) return;
+
+        Vector3 lateralDirection = transform.right;
+        lateralDirection.y = 0f;
+        lateralDirection.Normalize();
+
+        float driftIntensity = Mathf.Clamp01(Mathf.Abs(driftAngle) / 90f);
+        float speedRatio = Mathf.Clamp01(currentSpeed / maxSpeed);
+        float gripForce = driftIntensity * driftForce * speedRatio * lateralGrip;
+
+        Vector3 gripDirection = -Mathf.Sign(driftAngle) * lateralDirection;
+        rb.AddForce(gripDirection * gripForce, ForceMode.Acceleration);
+    }
+
+    /// <summary>
+    /// Applique l'inclinaison visuelle (roll) au mesh en fonction de l'input de rotation
+    /// </summary>
+    private void ApplyVisualRoll()
+    {
+        if (visualTransform == null)
+        {
+            Debug.LogWarning("VisualTransform non assigné!");
+            return;
+        }
+
+        Vector3 horizontalVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        float currentSpeed = horizontalVelocity.magnitude;
+        float speedRatio = Mathf.Clamp01(currentSpeed / maxSpeed);
+
+        float targetRoll = -moveInput.x * maxRollAngle * speedRatio;
+        currentRollAngle = Mathf.Lerp(currentRollAngle, targetRoll, rollSpeed * Time.fixedDeltaTime);
+
+        visualTransform.localRotation = Quaternion.Euler(currentRollAngle, 0f, 0f);
     }
 
     /// <summary>
