@@ -40,6 +40,12 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
     [SerializeField] private float maxDiagonalTwist = 6f;
     [SerializeField] private Transform visualTransform;
     
+    [Header("Acceleration Pitch")]
+    [SerializeField] private float accelPitchAngle = 5f;
+    [SerializeField] private float brakePitchAngle = 8f;
+    [SerializeField] private float accelPitchSpeedThreshold = 0.2f;
+    [SerializeField] private float accelPitchSmoothTime = 0.2f;
+    
     private Rigidbody rb;
     private Vector2 moveInput;
     private InputAction_PlayerControl controls;
@@ -48,6 +54,8 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
     private float currentPitchAngle = 0f;
     private float currentVisualYaw = 0f;
     private float currentDiagonalTwist = 0f;
+    private float currentAccelPitch = 0f;
+    private float accelPitchVelocity = 0f;
     private float rollVelocity = 0f;
     private float pitchVelocity = 0f;
     private float yawVelocity = 0f;
@@ -221,6 +229,11 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
 
         Vector3 gripDirection = -Mathf.Sign(driftAngle) * lateralDirection;
         rb.AddForce(gripDirection * gripForce, ForceMode.Acceleration);
+        
+        float driftDragFactor = 1f - (driftIntensity * speedRatio * 0.15f * Time.fixedDeltaTime);
+        Vector3 hVel = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        hVel *= Mathf.Clamp01(driftDragFactor);
+        rb.linearVelocity = new Vector3(hVel.x, rb.linearVelocity.y, hVel.z);
     }
 
     /// <summary>
@@ -254,12 +267,22 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
         float targetDiagonalTwist = turnInput * maxDiagonalTwist * visualFactor;
         currentDiagonalTwist = Mathf.SmoothDamp(currentDiagonalTwist, targetDiagonalTwist, ref diagonalVelocity, 0.15f);
 
+        float accelInput = moveInput.y;
+        float accelPitchSpeedFactor = Mathf.Clamp01(currentSpeed / (maxSpeed * accelPitchSpeedThreshold));
+        float targetAccelPitch = 0f;
+        if (accelInput > 0.01f)
+            targetAccelPitch = -accelInput * accelPitchAngle * accelPitchSpeedFactor;
+        else if (accelInput < -0.01f)
+            targetAccelPitch = -accelInput * brakePitchAngle * accelPitchSpeedFactor;
+        currentAccelPitch = Mathf.SmoothDamp(currentAccelPitch, targetAccelPitch, ref accelPitchVelocity, accelPitchSmoothTime);
+
         Quaternion rollRot = Quaternion.AngleAxis(currentRollAngle, Vector3.right);
         Quaternion pitchRot = Quaternion.AngleAxis(currentPitchAngle, Vector3.up);
         Quaternion yawRot = Quaternion.AngleAxis(currentVisualYaw, Vector3.forward);
         Quaternion diagonalRot = Quaternion.AngleAxis(currentDiagonalTwist, Vector3.back);
 
-        visualTransform.localRotation = pitchRot * yawRot * rollRot * diagonalRot;
+        Quaternion accelPitchRot = Quaternion.AngleAxis(currentAccelPitch, Vector3.forward);
+        visualTransform.localRotation = pitchRot * yawRot * rollRot * diagonalRot * accelPitchRot;
     }
 
     /// <summary>
