@@ -105,9 +105,13 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
         if (Physics.Raycast(transform.position, -transform.up, out RaycastHit hit, hoverHeight * 2f, groundLayer))
         {
             float distanceRatio = hit.distance / hoverHeight;
-            float force = (1f - distanceRatio) * hoverForce;
+            float error = 1f - distanceRatio;
+            float force = hoverForce * Mathf.Sign(error) * Mathf.Pow(Mathf.Abs(error), 1.4f);
             Vector3 dampingForce = -rb.linearVelocity.y * Vector3.up * hoverDamping;
             rb.AddForce((Vector3.up * force + dampingForce), ForceMode.Acceleration);
+            
+            float hoverNoise = Mathf.Sin(Time.time * 3.5f) * 0.04f + Mathf.Sin(Time.time * 5.7f) * 0.02f;
+            rb.AddForce(Vector3.up * hoverNoise, ForceMode.Acceleration);
         }
     }
 
@@ -144,7 +148,8 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
         Vector3 forwardVelocity = Vector3.Project(horizontalVelocity, forward);
         Vector3 lateralVelocity = horizontalVelocity - forwardVelocity;
         
-        lateralVelocity *= 0.1f;
+        float lateralKill = 1f - (lateralGrip * Time.fixedDeltaTime * 10f);
+        lateralVelocity *= Mathf.Clamp01(lateralKill);
         
         rb.linearVelocity = forwardVelocity + lateralVelocity + Vector3.up * rb.linearVelocity.y;
     }
@@ -171,8 +176,12 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
         float targetAngularVelocity = horizontal * turnSpeed * speedFactor;
         
         // Interpolation progressive vers la vélocité angulaire cible (damping/smoothing)
+        bool isAccelerating = Mathf.Abs(targetAngularVelocity) > Mathf.Abs(currentAngularVelocity) + 0.5f;
+        float smoothRate = isAccelerating
+            ? rotationSmoothing * 1.2f
+            : rotationSmoothing * 0.6f;
         currentAngularVelocity = Mathf.Lerp(currentAngularVelocity, targetAngularVelocity, 
-                                            rotationSmoothing * Time.fixedDeltaTime);
+                                            smoothRate * Time.fixedDeltaTime);
         
         // Application de la rotation via la vélocité angulaire lissée
         if (Mathf.Abs(currentAngularVelocity) > 0.01f)
@@ -233,9 +242,13 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
         currentRollAngle = Mathf.SmoothDamp(currentRollAngle, targetRoll, ref rollVelocity, 0.12f);
 
         float targetPitch = Mathf.Abs(turnInput) * maxPitchAngle * visualFactor;
+        if (turnInput < 0)
+            targetPitch = -targetPitch;
         currentPitchAngle = Mathf.SmoothDamp(currentPitchAngle, targetPitch, ref pitchVelocity, 0.25f);
 
         float targetYaw = -turnInput * maxVisualYaw * visualFactor;
+        if (turnInput < 0)
+            targetYaw = -targetYaw;
         currentVisualYaw = Mathf.SmoothDamp(currentVisualYaw, targetYaw, ref yawVelocity, 0.25f);
 
         float targetDiagonalTwist = turnInput * maxDiagonalTwist * visualFactor;
@@ -246,7 +259,7 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
         Quaternion yawRot = Quaternion.AngleAxis(currentVisualYaw, Vector3.forward);
         Quaternion diagonalRot = Quaternion.AngleAxis(currentDiagonalTwist, Vector3.back);
 
-        visualTransform.localRotation = rollRot * pitchRot * yawRot * diagonalRot;
+        visualTransform.localRotation = pitchRot * yawRot * rollRot * diagonalRot;
     }
 
     /// <summary>
