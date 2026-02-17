@@ -27,6 +27,10 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
     [SerializeField] private float drag = 0.5f;
     [SerializeField] private float angularDrag = 3f;
     
+    [Header("Throttle Response")]
+    [SerializeField] private float throttleRampUpSpeed = 3f;
+    [SerializeField] private float throttleRampDownSpeed = 5f;
+    
     [Header("Drift Settings")]
     [Range(0f, 1f)]
     [SerializeField] private float lateralGrip = 0.75f;
@@ -50,6 +54,7 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
     private Vector2 moveInput;
     private InputAction_PlayerControl controls;
     private float currentAngularVelocity;
+    private float currentThrottle = 0f;
     private float currentRollAngle = 0f;
     private float currentPitchAngle = 0f;
     private float currentVisualYaw = 0f;
@@ -129,7 +134,13 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
     /// </summary>
     private void ApplyMovement()
     {
-        float throttle = moveInput.y;
+        float targetThrottle = moveInput.y;
+        if (Mathf.Abs(targetThrottle) > Mathf.Abs(currentThrottle))
+            currentThrottle = Mathf.MoveTowards(currentThrottle, targetThrottle, throttleRampUpSpeed * Time.fixedDeltaTime);
+        else
+            currentThrottle = Mathf.MoveTowards(currentThrottle, targetThrottle, throttleRampDownSpeed * Time.fixedDeltaTime);
+        
+        float throttle = currentThrottle;
         
         Vector3 forward = transform.right;
         forward.y = 0f;
@@ -305,5 +316,10 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
     public float GetNormalizedSpeed()
     {
         return Mathf.Clamp01(rb.linearVelocity.magnitude / maxSpeed);
+    }
+
+    public float GetTurnInput()
+    {
+        return moveInput.x;
     }
 }
