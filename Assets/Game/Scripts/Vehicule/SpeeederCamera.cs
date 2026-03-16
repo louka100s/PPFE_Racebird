@@ -13,7 +13,7 @@ public class SpeeederCamera : MonoBehaviour
     
     [Header("FOV Settings")]
     [SerializeField] private float baseFOV = 60f;
-    [SerializeField] private float maxFOV = 68f;
+    [SerializeField] private float maxFOV = 80f;
     [SerializeField] private float fovChangeSpeed = 1.5f;
     
     [Header("Turn Roll")]
@@ -105,7 +105,7 @@ public class SpeeederCamera : MonoBehaviour
         if (speederController != null)
         {
             float speedRatio = speederController.GetNormalizedSpeed();
-            float targetFOV = Mathf.Lerp(baseFOV, maxFOV, speedRatio);
+            float targetFOV = Mathf.Lerp(baseFOV, maxFOV, Mathf.Pow(speedRatio, 1.5f));
             currentFOV = Mathf.Lerp(currentFOV, targetFOV, fovChangeSpeed * Time.deltaTime);
             cam.fieldOfView = currentFOV;
         }

@@ -810,11 +810,16 @@ MonoBehaviour:
   target: {fileID: 2045295266}
   distanceBehind: 8
   heightAbove: 3
-  followSpeed: 10
-  rotationSpeed: 5
+  followSpeed: 18
+  rotationSpeed: 15
   baseFOV: 45
   maxFOV: 60
   fovChangeSpeed: 0.35
+  cameraRollAngle: 2
+  cameraRollSpeed: 4
+  shakeIntensity: 0.002
+  shakeSpeedThreshold: 0.4
+  turnLagAmount: 0.15
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
