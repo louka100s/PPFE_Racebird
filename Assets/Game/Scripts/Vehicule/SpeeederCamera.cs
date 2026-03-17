@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 public class SpeeederCamera : MonoBehaviour
 {
@@ -15,6 +17,11 @@ public class SpeeederCamera : MonoBehaviour
     [SerializeField] private float baseFOV = 60f;
     [SerializeField] private float maxFOV = 80f;
     [SerializeField] private float fovChangeSpeed = 1.5f;
+    
+    [Header("Speed Motion Blur")]
+    [SerializeField] private Volume postProcessVolume;
+    [SerializeField] private float maxMotionBlurIntensity = 0.35f;
+    [SerializeField] private float motionBlurSpeedThreshold = 0.5f;
     
     [Header("Turn Roll")]
     [SerializeField] private float cameraRollAngle = 2f;
@@ -34,6 +41,8 @@ public class SpeeederCamera : MonoBehaviour
     private float currentLateralLag = 0f;
     private float lateralLagVelocity = 0f;
     private Quaternion cleanRotation;
+    private MotionBlur motionBlur;
+    private float currentBlurIntensity = 0f;
     private SpeeederController speederController;
 
     private void Awake()
@@ -52,6 +61,13 @@ public class SpeeederCamera : MonoBehaviour
             speederController = target.GetComponent<SpeeederController>();
         
         cleanRotation = transform.rotation;
+        
+        if (postProcessVolume != null)
+        {
+            postProcessVolume.profile.TryGet(out motionBlur);
+            if (motionBlur != null)
+                motionBlur.mode.value = MotionBlurMode.CameraOnly;
+        }
     }
 
     private void LateUpdate()
@@ -108,6 +124,20 @@ public class SpeeederCamera : MonoBehaviour
             float targetFOV = Mathf.Lerp(baseFOV, maxFOV, Mathf.Pow(speedRatio, 1.5f));
             currentFOV = Mathf.Lerp(currentFOV, targetFOV, fovChangeSpeed * Time.deltaTime);
             cam.fieldOfView = currentFOV;
+            
+            if (motionBlur != null)
+            {
+                float speedRatioLocal = speederController.GetNormalizedSpeed();
+                float targetBlur = 0f;
+                if (speedRatioLocal > motionBlurSpeedThreshold)
+                {
+                    float blurFactor = (speedRatioLocal - motionBlurSpeedThreshold) / (1f - motionBlurSpeedThreshold);
+                    targetBlur = Mathf.Pow(blurFactor, 1.5f) * maxMotionBlurIntensity;
+                }
+                currentBlurIntensity = Mathf.Lerp(currentBlurIntensity, targetBlur, 3f * Time.deltaTime);
+                motionBlur.intensity.value = currentBlurIntensity;
+                motionBlur.active = currentBlurIntensity > 0.01f;
+            }
         }
     }
 
