@@ -14,14 +14,18 @@ public class SpeeederCamera : MonoBehaviour
     [SerializeField] private float rotationSpeed = 10f;
     
     [Header("FOV Settings")]
-    [SerializeField] private float baseFOV = 60f;
-    [SerializeField] private float maxFOV = 80f;
+    [SerializeField] private float baseFOV = 65f;
+    [SerializeField] private float maxFOV = 88f;
     [SerializeField] private float fovChangeSpeed = 1.5f;
     
     [Header("Speed Motion Blur")]
     [SerializeField] private Volume postProcessVolume;
-    [SerializeField] private float maxMotionBlurIntensity = 0.35f;
+    [SerializeField] private float maxMotionBlurIntensity = 0.65f;
     [SerializeField] private float motionBlurSpeedThreshold = 0.5f;
+    
+    [Header("Speed Chromatic Aberration")]
+    [SerializeField] private float maxChromaticAberration = 0.25f;
+    [SerializeField] private float chromaticSpeedThreshold = 0.65f;
     
     [Header("Turn Roll")]
     [SerializeField] private float cameraRollAngle = 2f;
@@ -43,6 +47,8 @@ public class SpeeederCamera : MonoBehaviour
     private Quaternion cleanRotation;
     private MotionBlur motionBlur;
     private float currentBlurIntensity = 0f;
+    private ChromaticAberration chromaticAberration;
+    private float currentChromatic = 0f;
     private SpeeederController speederController;
 
     private void Awake()
@@ -67,6 +73,7 @@ public class SpeeederCamera : MonoBehaviour
             postProcessVolume.profile.TryGet(out motionBlur);
             if (motionBlur != null)
                 motionBlur.mode.value = MotionBlurMode.CameraOnly;
+            postProcessVolume.profile.TryGet(out chromaticAberration);
         }
     }
 
@@ -137,6 +144,20 @@ public class SpeeederCamera : MonoBehaviour
                 currentBlurIntensity = Mathf.Lerp(currentBlurIntensity, targetBlur, 3f * Time.deltaTime);
                 motionBlur.intensity.value = currentBlurIntensity;
                 motionBlur.active = currentBlurIntensity > 0.01f;
+            }
+            
+            if (chromaticAberration != null)
+            {
+                float speedRatioLocal = speederController.GetNormalizedSpeed();
+                float targetChromatic = 0f;
+                if (speedRatioLocal > chromaticSpeedThreshold)
+                {
+                    float chromFactor = (speedRatioLocal - chromaticSpeedThreshold) / (1f - chromaticSpeedThreshold);
+                    targetChromatic = Mathf.Pow(chromFactor, 1.5f) * maxChromaticAberration;
+                }
+                currentChromatic = Mathf.Lerp(currentChromatic, targetChromatic, 3f * Time.deltaTime);
+                chromaticAberration.intensity.value = currentChromatic;
+                chromaticAberration.active = currentChromatic > 0.01f;
             }
         }
     }
