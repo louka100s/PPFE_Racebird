@@ -38,12 +38,18 @@ public class SpeeederCamera : MonoBehaviour
     [Header("Turn Lag")]
     [SerializeField] private float turnLagAmount = 0.15f;
     
+    [Header("Turn Zoom")]
+    [SerializeField] private float turnZoomAmount = 1.5f;
+    [SerializeField] private float turnZoomSmoothTime = 0.3f;
+    
     private Camera cam;
     private float currentFOV;
     private float currentCameraRoll = 0f;
     private float cameraRollVelocity = 0f;
     private float currentLateralLag = 0f;
     private float lateralLagVelocity = 0f;
+    private float currentTurnZoom = 0f;
+    private float turnZoomVelocity = 0f;
     private Quaternion cleanRotation;
     private MotionBlur motionBlur;
     private float currentBlurIntensity = 0f;
@@ -82,7 +88,11 @@ public class SpeeederCamera : MonoBehaviour
         if (target == null) return;
 
         Vector3 targetForward = target.right;
-        Vector3 desiredPosition = target.position - targetForward * distanceBehind + Vector3.up * heightAbove;
+        float turnInput = speederController != null ? speederController.GetTurnInput() : 0f;
+        float speedRatio = speederController != null ? speederController.GetNormalizedSpeed() : 0f;
+        float targetZoom = Mathf.Abs(turnInput) * turnZoomAmount * Mathf.Clamp01(speedRatio * 2f);
+        currentTurnZoom = Mathf.SmoothDamp(currentTurnZoom, targetZoom, ref turnZoomVelocity, turnZoomSmoothTime);
+        Vector3 desiredPosition = target.position - targetForward * (distanceBehind - currentTurnZoom) + Vector3.up * heightAbove;
         transform.position = Vector3.Lerp(transform.position, desiredPosition, followSpeed * Time.deltaTime);
 
         Vector3 lookAtPosition = target.position + Vector3.up * (heightAbove * 0.5f);
@@ -93,9 +103,6 @@ public class SpeeederCamera : MonoBehaviour
 
         if (speederController != null)
         {
-            float speedRatio = speederController.GetNormalizedSpeed();
-            float turnInput = speederController.GetTurnInput();
-            
             float rollSpeedFactor = Mathf.Clamp01((speedRatio - 0.1f) / 0.3f);
             float targetRoll = -turnInput * cameraRollAngle * rollSpeedFactor;
             currentCameraRoll = Mathf.SmoothDamp(currentCameraRoll, targetRoll, ref cameraRollVelocity, 1f / cameraRollSpeed);
