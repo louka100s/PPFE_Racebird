@@ -24,8 +24,8 @@ public class SpeeederCamera : MonoBehaviour
     [SerializeField] private float motionBlurSpeedThreshold = 0.5f;
     
     [Header("Speed Chromatic Aberration")]
-    [SerializeField] private float maxChromaticAberration = 0.25f;
-    [SerializeField] private float chromaticSpeedThreshold = 0.65f;
+    [SerializeField] private float maxChromaticAberration = 0.07f;
+    [SerializeField] private float chromaticSpeedThreshold = 0.75f;
     
     [Header("Turn Roll")]
     [SerializeField] private float cameraRollAngle = 2f;
