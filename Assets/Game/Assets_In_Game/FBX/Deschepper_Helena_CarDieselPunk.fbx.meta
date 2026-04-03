@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 5ee076a42fc7d1b4cbc40afe0217b38e
+guid: 47182e332478d204781332845d12c459
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
@@ -7,10 +7,20 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Material.001
-    second: {fileID: 2100000, guid: 52ec09719bc72914fb40533e4957fd51, type: 2}
+      name: M_props
+    second: {fileID: 2100000, guid: fa38a2f0bc922cc46b346749832a5f0d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_vitre
+    second: {fileID: 2100000, guid: e181f1f1550021c49b8bc7790caf244e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_voiture
+    second: {fileID: 2100000, guid: 9d32a997bcac05749bcb74658bf21199, type: 2}
   materials:
-    materialImportMode: 2
+    materialImportMode: 0
     materialName: 0
     materialSearch: 1
     materialLocation: 1
