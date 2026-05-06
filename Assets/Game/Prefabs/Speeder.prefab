@@ -1,5 +1,95 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6991796620421645799
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1173141855497107486}
+  - component: {fileID: 1088740699987950236}
+  - component: {fileID: 6706404131007684722}
+  m_Layer: 3
+  m_Name: Visual
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1173141855497107486
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6991796620421645799}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5101659534047944600}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &1088740699987950236
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6991796620421645799}
+  m_Mesh: {fileID: -4853832026837176334, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
+--- !u!23 &6706404131007684722
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6991796620421645799}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: b37155aa2bdd3bc42b1323c2e95fb78f, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1001 &4703452549474482291
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -22,19 +112,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.17456588
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.02998496
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.012579284
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.7071068
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_LocalRotation.x
@@ -46,7 +136,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.7071068
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -64,9 +154,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Speeder
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 919132149155446097, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: -5754084199372789682, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
+    - {fileID: -7511558181221131132, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1173141855497107486}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
       insertIndex: -1
@@ -81,6 +180,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 2769709239416814129}
   m_SourcePrefab: {fileID: 100100000, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
+--- !u!4 &5101659534047944600 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
+  m_PrefabInstance: {fileID: 4703452549474482291}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &5586553699231712546 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: ed8a1eea397fe2a49a276bfe39900c31, type: 3}
@@ -151,8 +255,10 @@ MonoBehaviour:
   brakeForce: 30
   reverseForce: 20
   turnSpeed: 100
-  tiltAngle: 15
-  tiltSpeed: 3
+  minTurnSpeedFactor: 0.05
+  maxTurnSpeedFactor: 1
+  turnSpeedCurve: 0.1
+  rotationSmoothing: 5
   hoverHeight: 2
   hoverForce: 50
   hoverDamping: 5
@@ -161,6 +267,20 @@ MonoBehaviour:
     m_Bits: 4294967295
   drag: 2
   angularDrag: 3
+  throttleRampUpSpeed: 3
+  throttleRampDownSpeed: 5
+  lateralGrip: 0.75
+  driftForce: 45
+  minDriftSpeed: 5
+  maxRollAngle: 20
+  maxPitchAngle: 8
+  maxVisualYaw: 12
+  maxDiagonalTwist: 6
+  visualTransform: {fileID: 1173141855497107486}
+  accelPitchAngle: 5
+  brakePitchAngle: 8
+  accelPitchSpeedThreshold: 0.2
+  accelPitchSmoothTime: 0.2
 --- !u!114 &2769709239416814129
 MonoBehaviour:
   m_ObjectHideFlags: 0

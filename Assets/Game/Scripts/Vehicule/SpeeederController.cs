@@ -72,6 +72,7 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
         rb.useGravity = false;
         rb.linearDamping = drag;
         rb.angularDamping = angularDrag;
+        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         
         controls = new InputAction_PlayerControl();
         controls.Speeder.SetCallbacks(this);

@@ -68,18 +68,29 @@ public class SpeeederCamera : MonoBehaviour
     {
         if (target == null)
             target = FindFirstObjectByType<SpeeederController>()?.transform;
-        
+
         if (target != null)
             speederController = target.GetComponent<SpeeederController>();
-        
-        cleanRotation = transform.rotation;
-        
+
+        if (postProcessVolume == null)
+            postProcessVolume = FindFirstObjectByType<Volume>();
+
         if (postProcessVolume != null)
         {
             postProcessVolume.profile.TryGet(out motionBlur);
             if (motionBlur != null)
                 motionBlur.mode.value = MotionBlurMode.CameraOnly;
             postProcessVolume.profile.TryGet(out chromaticAberration);
+        }
+
+        if (target != null)
+        {
+            Vector3 lookAtPosition = target.position + Vector3.up * (heightAbove * 0.5f);
+            cleanRotation = Quaternion.LookRotation(lookAtPosition - transform.position);
+        }
+        else
+        {
+            cleanRotation = transform.rotation;
         }
     }
 
