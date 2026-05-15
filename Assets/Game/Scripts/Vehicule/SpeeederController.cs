@@ -319,6 +319,23 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
         return Mathf.Clamp01(rb.linearVelocity.magnitude / maxSpeed);
     }
 
+    /// <summary>
+    /// Retourne la vitesse horizontale brute en unités/seconde
+    /// </summary>
+    public float GetCurrentSpeed()
+    {
+        Vector3 horizontalVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        return horizontalVelocity.magnitude;
+    }
+
+    /// <summary>
+    /// Retourne la vitesse maximale configurée
+    /// </summary>
+    public float GetMaxSpeed()
+    {
+        return maxSpeed;
+    }
+
     public float GetTurnInput()
     {
         return moveInput.x;
