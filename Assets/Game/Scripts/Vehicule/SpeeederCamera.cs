@@ -8,7 +8,7 @@ public class SpeeederCamera : MonoBehaviour
     [SerializeField] private Transform target;
     
     [Header("Camera Position")]
-    [SerializeField] private float distanceBehind = 6f;
+    [SerializeField] private float distanceBehind = 8f;
     [SerializeField] private float heightAbove = 3f;
     [SerializeField] private float followSpeed = 10f;
     [SerializeField] private float rotationSpeed = 10f;
@@ -36,7 +36,7 @@ public class SpeeederCamera : MonoBehaviour
     [SerializeField] private float shakeSpeedThreshold = 0.4f;
     
     [Header("Turn Lag")]
-    [SerializeField] private float turnLagAmount = 0.15f;
+    [SerializeField] private float turnLagAmount = 0.3f;
     
     [Header("Turn Zoom")]
     [SerializeField] private float turnZoomAmount = 1.5f;
@@ -85,8 +85,13 @@ public class SpeeederCamera : MonoBehaviour
 
         if (target != null)
         {
-            Vector3 lookAtPosition = target.position + Vector3.up * (heightAbove * 0.5f);
-            cleanRotation = Quaternion.LookRotation(lookAtPosition - transform.position);
+            Vector3 targetForward = target.right;
+            Vector3 startPos = target.position - targetForward * distanceBehind + Vector3.up * heightAbove;
+            transform.position = startPos;
+
+            Vector3 lookAt = target.position + Vector3.up * (heightAbove * 0.5f);
+            cleanRotation = Quaternion.LookRotation(lookAt - startPos);
+            transform.rotation = cleanRotation;
         }
         else
         {

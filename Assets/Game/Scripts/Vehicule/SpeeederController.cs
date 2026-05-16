@@ -18,7 +18,7 @@ public class SpeeederController : MonoBehaviour, InputAction_PlayerControl.ISpee
     [SerializeField] private float rotationSmoothing = 5f;
     
     [Header("Hover Settings")]
-    [SerializeField] private float hoverHeight = 2f;
+    [SerializeField] private float hoverHeight = 2.3f;
     [SerializeField] private float hoverForce = 50f;
     [SerializeField] private float hoverDamping = 5f;
     [SerializeField] private LayerMask groundLayer = -1;

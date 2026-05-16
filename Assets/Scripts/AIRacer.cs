@@ -14,17 +14,24 @@ public class AIRacer : MonoBehaviour
     [SerializeField] private SplinePath splinePath;
 
     [Header("Speed")]
-    [SerializeField] private float baseSpeed = 60f;
-    [SerializeField] private float acceleration = 15f;
-    [SerializeField] private float deceleration = 20f;
+    [SerializeField] private float baseSpeed = 140f;
+    [SerializeField] private float acceleration = 40f;
+    [SerializeField] private float deceleration = 55f;
+    [SerializeField] private float maxProgressPerFrame = 0.05f;
+
+    [Header("Speed Calibration")]
+    [SerializeField] private float speedMultiplier = 3f;
 
     [Header("Cornering")]
-    [SerializeField] private float cornerSpeedMultiplier = 0.4f;
+    [SerializeField] private float cornerSpeedMultiplier = 0.45f;
     [SerializeField] private float lookAheadDistance = 0.05f;
-    [SerializeField] private float cornerSmoothTime = 0.3f;
+    [SerializeField] private float cornerSmoothTime = 0.6f;
 
     [Header("Start")]
     [SerializeField] private float startOffset = 0f;
+
+    [Header("Hover")]
+    [SerializeField] private float hoverHeight = 2.3f;
 
     [Header("Trajectory Variation")]
     [SerializeField] private float lateralOffset = 0f;
@@ -113,10 +120,15 @@ public class AIRacer : MonoBehaviour
         float totalLength = splinePath.GetTotalLength();
         if (totalLength <= 0f) return;
 
-        // --- Cornering speed ---
-        float curvatureHere  = splinePath.GetCurvature(currentProgress);
-        float curvatureAhead = splinePath.GetCurvature(currentProgress + lookAheadDistance);
-        float maxCurvature   = Mathf.Max(curvatureHere, curvatureAhead);
+        // --- Cornering speed --- (averaged over multiple samples to smooth out curvature spikes at spline knots)
+        float sampleStep = lookAheadDistance / 4f;
+        float avgCurvature = 0f;
+        for (int i = 0; i < 5; i++)
+        {
+            avgCurvature += splinePath.GetCurvature(currentProgress + sampleStep * i);
+        }
+        avgCurvature /= 5f;
+        float maxCurvature = avgCurvature;
 
         float targetSpeed = Mathf.Lerp(baseSpeed, baseSpeed * cornerSpeedMultiplier, maxCurvature);
         currentTargetSpeed = Mathf.SmoothDamp(currentTargetSpeed, targetSpeed, ref speedSmoothVelocity, cornerSmoothTime);
@@ -146,10 +158,12 @@ public class AIRacer : MonoBehaviour
         currentSpeed = Mathf.MoveTowards(currentSpeed, currentTargetSpeed, rateOfChange * Time.deltaTime);
 
         // --- Movement along spline (X-forward convention) ---
-        currentProgress += (currentSpeed * Time.deltaTime) / totalLength;
+        float progressDelta = Mathf.Min((currentSpeed * speedMultiplier * Time.deltaTime) / totalLength, maxProgressPerFrame);
+        currentProgress += progressDelta;
         currentProgress %= 1f;
 
         transform.position = splinePath.GetPosition(currentProgress);
+        transform.position += Vector3.up * hoverHeight;
 
         // --- Lateral trajectory variation ---
         Vector3 splineDir = splinePath.GetDirection(currentProgress);
@@ -174,14 +188,14 @@ public class AIRacer : MonoBehaviour
         float targetDriftOffset;
         float targetDriftYaw;
 
-        if (curvatureHere < driftCurvatureThreshold)
+        if (avgCurvature < driftCurvatureThreshold)
         {
             targetDriftOffset = 0f;
             targetDriftYaw    = 0f;
         }
         else
         {
-            float driftIntensity = (curvatureHere - driftCurvatureThreshold) / (1f - driftCurvatureThreshold);
+            float driftIntensity = (avgCurvature - driftCurvatureThreshold) / (1f - driftCurvatureThreshold);
             driftIntensity      *= Mathf.Clamp01(currentSpeed / baseSpeed);
             // Body slides to the outside, nose points into the turn
             targetDriftOffset    = -turnSignDrift * driftIntensity * maxDriftOffset;
@@ -194,7 +208,7 @@ public class AIRacer : MonoBehaviour
 
         // Orient so transform.right points along the spline tangent
         Vector3 targetRight   = splinePath.GetDirection(currentProgress);
-        Vector3 smoothedRight = Vector3.Slerp(transform.right, targetRight, 10f * Time.deltaTime).normalized;
+        Vector3 smoothedRight = Vector3.Slerp(transform.right, targetRight, 12f * Time.deltaTime).normalized;
         Vector3 newForward    = new Vector3(-smoothedRight.z, 0f, smoothedRight.x);
         transform.rotation    = Quaternion.LookRotation(newForward, Vector3.up);
 
