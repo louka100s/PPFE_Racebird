@@ -13,19 +13,16 @@ public class AIRacer : MonoBehaviour
     [Header("Path")]
     [SerializeField] private SplinePath splinePath;
 
-    [Header("Speed")]
-    [SerializeField] private float baseSpeed = 140f;
-    [SerializeField] private float acceleration = 40f;
-    [SerializeField] private float deceleration = 55f;
-    [SerializeField] private float maxProgressPerFrame = 0.05f;
+    [Header("Speed Match")]
+    [SerializeField] private float playerSpeedMatch = 0.95f;
 
     [Header("Speed Calibration")]
-    [SerializeField] private float speedMultiplier = 3f;
+    [SerializeField] private float speedMultiplier = 1.8f;
+    [SerializeField] private float maxProgressPerFrame = 0.05f;
 
-    [Header("Cornering")]
-    [SerializeField] private float cornerSpeedMultiplier = 0.45f;
-    [SerializeField] private float lookAheadDistance = 0.05f;
-    [SerializeField] private float cornerSmoothTime = 0.6f;
+    // Kept for profile compatibility and visual feedback scaling
+    [Header("Reference Speed")]
+    [SerializeField] private float baseSpeed = 100f;
 
     [Header("Start")]
     [SerializeField] private float startOffset = 0f;
@@ -42,7 +39,6 @@ public class AIRacer : MonoBehaviour
     [SerializeField] private Transform playerTransform;
     [SerializeField] private float rubberBandStrength = 0.08f;
     [SerializeField] private float rubberBandRange = 40f;
-    [SerializeField] private float rubberBandSmoothTime = 1f;
 
     [Header("Contact")]
     [SerializeField] private float playerPushForce = 15f;
@@ -67,11 +63,7 @@ public class AIRacer : MonoBehaviour
 
     private float currentProgress;
     private float currentSpeed;
-    private float currentTargetSpeed;
-    private float speedSmoothVelocity;
     private float noiseSeed;
-    private float currentRubberBand = 1f;
-    private float rubberBandVelocity;
 
     private float knockbackTimer;
     private float knockbackLateralOffset;
@@ -92,18 +84,15 @@ public class AIRacer : MonoBehaviour
     {
         if (profile != null)
         {
-            baseSpeed             = profile.baseSpeed;
-            cornerSpeedMultiplier = profile.cornerSpeedMultiplier;
-            lookAheadDistance     = profile.lookAheadDistance;
-            lateralNoiseScale    = profile.lateralVariation;
-            maxRollAngle         *= profile.rollMultiplier;
-            maxPitchAngle        *= profile.pitchMultiplier;
+            baseSpeed         = profile.baseSpeed;
+            lateralNoiseScale = profile.lateralVariation;
+            maxRollAngle     *= profile.rollMultiplier;
+            maxPitchAngle    *= profile.pitchMultiplier;
         }
 
-        currentProgress    = startOffset;
-        currentSpeed       = 0f;
-        currentTargetSpeed = baseSpeed;
-        noiseSeed          = Random.Range(0f, 1000f);
+        currentProgress = startOffset;
+        currentSpeed    = 0f;
+        noiseSeed       = Random.Range(0f, 1000f);
 
         if (playerTransform == null)
         {
@@ -120,42 +109,37 @@ public class AIRacer : MonoBehaviour
         float totalLength = splinePath.GetTotalLength();
         if (totalLength <= 0f) return;
 
-        // --- Cornering speed --- (averaged over multiple samples to smooth out curvature spikes at spline knots)
-        float sampleStep = lookAheadDistance / 4f;
-        float avgCurvature = 0f;
-        for (int i = 0; i < 5; i++)
-        {
-            avgCurvature += splinePath.GetCurvature(currentProgress + sampleStep * i);
-        }
-        avgCurvature /= 5f;
-        float maxCurvature = avgCurvature;
-
-        float targetSpeed = Mathf.Lerp(baseSpeed, baseSpeed * cornerSpeedMultiplier, maxCurvature);
-        currentTargetSpeed = Mathf.SmoothDamp(currentTargetSpeed, targetSpeed, ref speedSmoothVelocity, cornerSmoothTime);
-
-        // --- Rubber banding ---
+        // --- Speed: match player's real physics speed ---
+        float playerSpeed = 0f;
         if (playerTransform != null)
         {
-            float distance = Vector3.Distance(transform.position, playerTransform.position);
+            Rigidbody playerRb = playerTransform.GetComponent<Rigidbody>();
+            if (playerRb != null)
+            {
+                Vector3 horizontalVel = new Vector3(playerRb.linearVelocity.x, 0f, playerRb.linearVelocity.z);
+                playerSpeed = horizontalVel.magnitude;
+            }
+        }
+
+        // --- Rubber banding: adjusts effective match ratio based on distance/position ---
+        float effectiveMatch = playerSpeedMatch;
+        if (playerTransform != null)
+        {
+            float distance      = Vector3.Distance(transform.position, playerTransform.position);
             float distanceFactor = Mathf.Clamp01(distance / rubberBandRange);
 
-            // Determine who is ahead by projecting positions onto the spline direction
             Vector3 splineTangent = splinePath.GetDirection(currentProgress);
             Vector3 toPlayer      = playerTransform.position - transform.position;
             float dot             = Vector3.Dot(toPlayer, splineTangent);
 
-            // dot > 0 means the player is ahead of the AI → AI speeds up
-            float targetMultiplier = dot > 0f
-                ? 1f + rubberBandStrength
-                : 1f - rubberBandStrength;
+            float matchTarget = dot > 0f
+                ? playerSpeedMatch + rubberBandStrength
+                : playerSpeedMatch - rubberBandStrength;
 
-            targetMultiplier   = Mathf.Lerp(1f, targetMultiplier, distanceFactor);
-            currentRubberBand  = Mathf.SmoothDamp(currentRubberBand, targetMultiplier, ref rubberBandVelocity, rubberBandSmoothTime);
-            currentTargetSpeed *= currentRubberBand;
+            effectiveMatch = Mathf.Lerp(playerSpeedMatch, matchTarget, distanceFactor);
         }
 
-        float rateOfChange = currentSpeed < currentTargetSpeed ? acceleration : deceleration;
-        currentSpeed = Mathf.MoveTowards(currentSpeed, currentTargetSpeed, rateOfChange * Time.deltaTime);
+        currentSpeed = Mathf.Lerp(currentSpeed, playerSpeed * effectiveMatch, 2f * Time.deltaTime);
 
         // --- Movement along spline (X-forward convention) ---
         float progressDelta = Mathf.Min((currentSpeed * speedMultiplier * Time.deltaTime) / totalLength, maxProgressPerFrame);
@@ -180,22 +164,23 @@ public class AIRacer : MonoBehaviour
             transform.position += lateral * (knockbackLateralOffset * knockFactor * aiKnockbackOffset);
         }
 
-        // --- Fake drift ---
+        // --- Fake drift (curvature sampled locally for visual purposes only) ---
         Vector3 dirNowDrift   = splinePath.GetDirection(currentProgress);
         Vector3 dirAheadDrift = splinePath.GetDirection(currentProgress + 0.005f);
         float turnSignDrift   = Mathf.Sign(Vector3.Cross(dirNowDrift, dirAheadDrift).y);
+        float visualCurvature = splinePath.GetCurvature(currentProgress);
 
         float targetDriftOffset;
         float targetDriftYaw;
 
-        if (avgCurvature < driftCurvatureThreshold)
+        if (visualCurvature < driftCurvatureThreshold)
         {
             targetDriftOffset = 0f;
             targetDriftYaw    = 0f;
         }
         else
         {
-            float driftIntensity = (avgCurvature - driftCurvatureThreshold) / (1f - driftCurvatureThreshold);
+            float driftIntensity = (visualCurvature - driftCurvatureThreshold) / (1f - driftCurvatureThreshold);
             driftIntensity      *= Mathf.Clamp01(currentSpeed / baseSpeed);
             // Body slides to the outside, nose points into the turn
             targetDriftOffset    = -turnSignDrift * driftIntensity * maxDriftOffset;
@@ -217,7 +202,7 @@ public class AIRacer : MonoBehaviour
         {
             // Roll: around movement axis (local X) based on turn sign and curvature
             float speedRatio = Mathf.Clamp01(currentSpeed / baseSpeed);
-            float targetRoll = turnSignDrift * maxCurvature * maxRollAngle * speedRatio;
+            float targetRoll = turnSignDrift * visualCurvature * maxRollAngle * speedRatio;
             currentRoll = Mathf.SmoothDamp(currentRoll, targetRoll, ref rollVelocity, visualSmoothTime);
 
             // Pitch: around lateral axis (local Z) — negative on acceleration, positive on braking
