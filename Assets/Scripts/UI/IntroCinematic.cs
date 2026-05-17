@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// Gère la cinématique d'intro : désactive le joueur, déplace la caméra, lance les dialogues.
@@ -23,6 +24,16 @@ public class IntroCinematic : MonoBehaviour
     [SerializeField] private SpeeederCamera speederCamera;
 
     private Camera mainCamera;
+    private bool   isComplete = false;
+
+    /// <summary>Retourne vrai quand la cinématique est terminée ou a été skippée.</summary>
+    public bool IsComplete => isComplete;
+
+    private void Update()
+    {
+        if (!isComplete && Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame)
+            SkipIntro();
+    }
 
     // Start est une coroutine pour garantir que le singleton DialogueSystem
     // est initialisé avant d'appeler PlayDialogueSequence.
@@ -89,8 +100,20 @@ public class IntroCinematic : MonoBehaviour
         OnIntroComplete();
     }
 
+    /// <summary>
+    /// Skips the intro cinematic immediately and hands control back to the player.
+    /// </summary>
+    public void SkipIntro()
+    {
+        StopAllCoroutines();
+        if (DialogueSystem.Instance != null) DialogueSystem.Instance.StopDialogue();
+        OnIntroComplete();
+    }
+
     private void OnIntroComplete()
     {
+        isComplete = true;
+
         if (playerController != null) playerController.enabled = true;
         if (speederCamera != null) speederCamera.enabled = true;
 

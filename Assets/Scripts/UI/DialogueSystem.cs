@@ -88,6 +88,26 @@ public class DialogueSystem : MonoBehaviour
     /// <summary>Retourne vrai si une séquence est en cours.</summary>
     public bool IsPlaying() => isPlaying;
 
+    /// <summary>
+    /// Arrête immédiatement toute séquence de dialogue et cache les panels.
+    /// Appelé lors du skip de la cinématique.
+    /// </summary>
+    public void StopDialogue()
+    {
+        if (currentDialogue != null)
+        {
+            StopCoroutine(currentDialogue);
+            currentDialogue = null;
+        }
+
+        if (mjPanel != null)    mjPanel.SetActive(false);
+        if (snoopPanel != null) snoopPanel.SetActive(false);
+
+        isPlaying      = false;
+        isTyping       = false;
+        skipRequested  = false;
+    }
+
     // -------------------------------------------------------------------------
     // Coroutines privées
     // -------------------------------------------------------------------------
@@ -96,25 +116,22 @@ public class DialogueSystem : MonoBehaviour
     {
         isPlaying = true;
 
+        // Affiche les deux panels dès le début — ils restent visibles ensemble
+        if (mjPanel != null) mjPanel.SetActive(true);
+        if (snoopPanel != null) snoopPanel.SetActive(true);
+
+        // Vide les deux textes au départ
+        if (mjDialogueText != null) mjDialogueText.text = string.Empty;
+        if (snoopDialogueText != null) snoopDialogueText.text = string.Empty;
+
         foreach (DialogueLine line in lines)
         {
             Debug.Log("DialogueSystem: " + line.speaker + " says: " + line.text);
 
             bool isMJ = line.speaker == DialogueLine.Speaker.MJ;
+            currentActiveText = isMJ ? mjDialogueText : snoopDialogueText;
 
-            if (isMJ)
-            {
-                if (snoopPanel != null) snoopPanel.SetActive(false);
-                if (mjPanel != null) mjPanel.SetActive(true);
-                currentActiveText = mjDialogueText;
-            }
-            else
-            {
-                if (mjPanel != null) mjPanel.SetActive(false);
-                if (snoopPanel != null) snoopPanel.SetActive(true);
-                currentActiveText = snoopDialogueText;
-            }
-
+            // Vide uniquement le texte du speaker actif avant le typewriter
             if (currentActiveText != null)
                 currentActiveText.text = string.Empty;
 
@@ -155,6 +172,7 @@ public class DialogueSystem : MonoBehaviour
             }
 
             currentActiveText.text += fullText[i];
+            currentActiveText.ForceMeshUpdate();
             yield return new WaitForSeconds(interval);
         }
 
