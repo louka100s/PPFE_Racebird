@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
@@ -20,22 +21,40 @@ public class LapManager : MonoBehaviour
     [SerializeField] private TMP_Text finishedStatsText;
     [SerializeField] private GameObject raceFinishedPanel;
 
-    private int   currentLap    = 0;
+    [Header("End Screens")]
+    [SerializeField] private GameObject victoryPanel;
+    [SerializeField] private GameObject deathPanel;
+    [SerializeField] private SpeeederController playerController;
+    [SerializeField] private float endScreenDelay = 1.5f;
+
+    [Header("AI Tracking")]
+    [SerializeField] private AIRacer aiRacer;
+
+    private int   currentLap    = 1;
     private float raceTimer     = 0f;
     private float lapTimer      = 0f;
     private float bestLapTime   = Mathf.Infinity;
     private bool  raceStarted   = false;
     private bool  raceFinished  = false;
+    private bool  firstCrossDone = false;
+
+    private int   aiCurrentLap  = 0;
+    private float aiLastProgress = 0f;
 
     private void Awake()
     {
         Instance = this;
+        Time.timeScale = 1f;
     }
 
     private void Start()
     {
         if (raceFinishedPanel != null)
             raceFinishedPanel.SetActive(false);
+        if (victoryPanel != null)
+            victoryPanel.SetActive(false);
+        if (deathPanel != null)
+            deathPanel.SetActive(false);
 
         UpdateLapText();
         UpdateTimerText(0f);
@@ -51,6 +70,21 @@ public class LapManager : MonoBehaviour
 
         UpdateTimerText(lapTimer);
         UpdateBestLapText();
+
+        // AI lap tracking
+        if (aiRacer != null)
+        {
+            float aiProgress = aiRacer.GetProgress();
+            if (aiLastProgress > 0.9f && aiProgress < 0.1f)
+            {
+                aiCurrentLap++;
+                if (aiCurrentLap > totalLaps)
+                {
+                    StartCoroutine(ShowDefeat());
+                }
+            }
+            aiLastProgress = aiProgress;
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -62,40 +96,48 @@ public class LapManager : MonoBehaviour
     {
         if (raceFinished) return;
 
-        if (currentLap == 0)
+        if (!firstCrossDone)
         {
-            // Premier passage — démarre la course
-            raceStarted = true;
-            currentLap  = 1;
-            raceTimer   = 0f;
-            lapTimer    = 0f;
-        }
-        else
-        {
-            // Fin d'un tour
-            if (lapTimer < bestLapTime)
-                bestLapTime = lapTimer;
-
-            currentLap++;
-            lapTimer = 0f;
-
-            if (currentLap > totalLaps)
-            {
-                FinishRace();
-                return;
-            }
-
-            FindFirstObjectByType<RaceDialogueTrigger>()?.OnLapCompleted(currentLap);
+            // Premier passage sur la ligne — démarre la course, on est déjà au tour 1
+            firstCrossDone = true;
+            raceStarted    = true;
+            raceTimer      = 0f;
+            lapTimer       = 0f;
+            UpdateLapText();
+            return;
         }
 
+        // Fin d'un tour
+        if (lapTimer < bestLapTime)
+            bestLapTime = lapTimer;
+
+        currentLap++;
+        lapTimer = 0f;
+
+        // Toujours mettre à jour l'affichage, même sur le dernier tour
         UpdateLapText();
+
+        if (currentLap > totalLaps)
+        {
+            StartCoroutine(ShowVictory());
+            return;
+        }
+
+        FindFirstObjectByType<RaceDialogueTrigger>()?.OnLapCompleted(currentLap);
+    }
+
+    /// <summary>Appelé par VehicleHealth quand le joueur est détruit.</summary>
+    public void PlayerDestroyed()
+    {
+        if (!raceFinished)
+            StartCoroutine(ShowDefeat());
     }
 
     // -------------------------------------------------------------------------
-    // Private helpers
+    // End screens
     // -------------------------------------------------------------------------
 
-    private void FinishRace()
+    private IEnumerator ShowVictory()
     {
         raceFinished = true;
 
@@ -108,14 +150,50 @@ public class LapManager : MonoBehaviour
                 $"Temps total  {FormatTime(raceTimer)}\n" +
                 $"Meilleur tour  {FormatTime(bestLapTime)}";
         }
+
+        yield return new WaitForSeconds(endScreenDelay);
+
+        if (playerController != null)
+            playerController.enabled = false;
+
+        Cursor.lockState = CursorLockMode.Confined;
+        Cursor.visible = true;
+
+        Time.timeScale = 0f;
+
+        if (raceFinishedPanel != null)
+            raceFinishedPanel.SetActive(false);
+
+        if (victoryPanel != null)
+            victoryPanel.SetActive(true);
     }
+
+    private IEnumerator ShowDefeat()
+    {
+        raceFinished = true;
+
+        yield return new WaitForSeconds(endScreenDelay);
+
+        if (playerController != null)
+            playerController.enabled = false;
+
+        Cursor.lockState = CursorLockMode.Confined;
+        Cursor.visible = true;
+
+        Time.timeScale = 0f;
+
+        if (deathPanel != null)
+            deathPanel.SetActive(true);
+    }
+
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
 
     private void UpdateLapText()
     {
         if (lapText == null) return;
-        lapText.text = currentLap == 0
-            ? $"LAP — / {totalLaps}"
-            : $"LAP {currentLap} / {totalLaps}";
+        lapText.text = $"TOUR {currentLap} / {totalLaps}";
     }
 
     private void UpdateTimerText(float time)
@@ -152,10 +230,10 @@ public class LapManager : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
-    /// <summary>Charge la scène 0 (menu principal).</summary>
+    /// <summary>Charge la scène du menu principal.</summary>
     public void GoToMenu()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene(0);
+        SceneManager.LoadScene("MainMenu");
     }
 }

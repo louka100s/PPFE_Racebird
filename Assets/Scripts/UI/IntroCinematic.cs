@@ -2,9 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 /// <summary>
 /// Gère la cinématique d'intro : désactive le joueur, déplace la caméra, lance les dialogues.
+/// Affiche optionnellement une image de contrôles clavier pendant les premières secondes.
 /// </summary>
 public class IntroCinematic : MonoBehaviour
 {
@@ -22,6 +24,10 @@ public class IntroCinematic : MonoBehaviour
     [Header("References")]
     [SerializeField] private SpeeederController playerController;
     [SerializeField] private SpeeederCamera speederCamera;
+
+    [Header("Controls Overlay")]
+    [SerializeField] private Image controlsImage;
+    [SerializeField] private float controlsDisplayDuration = 13f;
 
     private Camera mainCamera;
     private bool   isComplete = false;
@@ -50,6 +56,10 @@ public class IntroCinematic : MonoBehaviour
             mainCamera.transform.rotation = cameraStartPoint.rotation;
         }
 
+        // Affiche l'image de contrôles clavier
+        if (controlsImage != null)
+            controlsImage.gameObject.SetActive(true);
+
         // Attend une frame pour que tous les Awake() soient exécutés
         // et que DialogueSystem.Instance soit assigné.
         yield return null;
@@ -64,6 +74,7 @@ public class IntroCinematic : MonoBehaviour
         }
 
         StartCoroutine(MoveCinematicCamera());
+        StartCoroutine(HideControlsAfterDelay());
     }
 
     private IEnumerator MoveCinematicCamera()
@@ -96,8 +107,15 @@ public class IntroCinematic : MonoBehaviour
         }
 
         // La caméra a fini son trajet — on rend la main au joueur.
-        // Les dialogues continuent de s'afficher par-dessus le jeu s'ils ne sont pas terminés.
         OnIntroComplete();
+    }
+
+    private IEnumerator HideControlsAfterDelay()
+    {
+        yield return new WaitForSeconds(controlsDisplayDuration);
+
+        if (controlsImage != null)
+            controlsImage.gameObject.SetActive(false);
     }
 
     /// <summary>
@@ -107,12 +125,19 @@ public class IntroCinematic : MonoBehaviour
     {
         StopAllCoroutines();
         if (DialogueSystem.Instance != null) DialogueSystem.Instance.StopDialogue();
+
+        if (controlsImage != null)
+            controlsImage.gameObject.SetActive(false);
+
         OnIntroComplete();
     }
 
     private void OnIntroComplete()
     {
         isComplete = true;
+
+        if (controlsImage != null)
+            controlsImage.gameObject.SetActive(false);
 
         if (playerController != null) playerController.enabled = true;
         if (speederCamera != null) speederCamera.enabled = true;

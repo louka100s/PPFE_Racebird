@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -12,10 +11,10 @@ public class VehicleHealth : MonoBehaviour
     [SerializeField] private float currentHealth;
 
     [Header("Collision Damage")]
-    [SerializeField] private float minDamageSpeed = 120f;
+    [SerializeField] private float minDamageSpeed = 30f;
     [SerializeField] private float maxDamage = 35f;
-    [SerializeField] private float speedDifferenceMultiplier = 0.8f;
-    [SerializeField] private float collisionCooldown = 1f;
+    [SerializeField] private float speedDifferenceMultiplier = 1.2f;
+    [SerializeField] private float collisionCooldown = 0.5f;
 
     [Header("Visual Feedback")]
     [SerializeField] private GameObject explosionPrefab;
@@ -120,9 +119,11 @@ public class VehicleHealth : MonoBehaviour
 
         if (playerController != null)
         {
-            // Player destroyed — disable controls and show defeat screen
+            // Player destroyed — notify LapManager for defeat screen
             playerController.enabled = false;
-            StartCoroutine(ShowDeathScreenDelayed(2f));
+
+            if (LapManager.Instance != null)
+                LapManager.Instance.PlayerDestroyed();
         }
         else if (aiRacer != null)
         {
@@ -137,14 +138,5 @@ public class VehicleHealth : MonoBehaviour
 
             Destroy(gameObject, 3f);
         }
-    }
-
-    private IEnumerator ShowDeathScreenDelayed(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        DeathScreen screen = FindFirstObjectByType<DeathScreen>(FindObjectsInactive.Include);
-        if (screen != null)
-            screen.Show();
     }
 }

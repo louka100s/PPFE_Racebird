@@ -41,11 +41,17 @@ public class AIRacer : MonoBehaviour
     [SerializeField] private float rubberBandRange = 40f;
 
     [Header("Contact")]
-    [SerializeField] private float playerPushForce = 15f;
-    [SerializeField] private float aiKnockbackDuration = 0.4f;
-    [SerializeField] private float aiKnockbackOffset = 1.5f;
-    [SerializeField] private float aiSlowdownOnHit = 0.7f;
-    [SerializeField] private float contactCooldown = 1f;
+    [SerializeField] private float playerPushForce = 25f;
+    [SerializeField] private float aiKnockbackDuration = 0.6f;
+    [SerializeField] private float aiKnockbackOffset = 2.5f;
+    [SerializeField] private float aiSlowdownOnHit = 0.6f;
+    [SerializeField] private float contactCooldown = 0.3f;
+
+    [Header("Proximity Separation")]
+    [Tooltip("Minimum distance before the AI steers away from the player.")]
+    [SerializeField] private float separationRadius = 12f;
+    [Tooltip("How strongly the AI pushes itself away from the player when too close.")]
+    [SerializeField] private float separationStrength = 6f;
 
     [Header("Fake Drift")]
     [SerializeField] private float driftCurvatureThreshold = 0.3f;
@@ -164,6 +170,20 @@ public class AIRacer : MonoBehaviour
             transform.position += lateral * (knockbackLateralOffset * knockFactor * aiKnockbackOffset);
         }
 
+        // --- Proximity separation: steer away from player to avoid overlap ---
+        if (playerTransform != null)
+        {
+            Vector3 toPlayer = playerTransform.position - transform.position;
+            toPlayer.y = 0f;
+            float dist = toPlayer.magnitude;
+            if (dist < separationRadius && dist > 0.1f)
+            {
+                float pushFactor = 1f - Mathf.Clamp01(dist / separationRadius);
+                Vector3 awayDir = -toPlayer.normalized;
+                transform.position += awayDir * (separationStrength * pushFactor * Time.deltaTime);
+            }
+        }
+
         // --- Fake drift (curvature sampled locally for visual purposes only) ---
         Vector3 dirNowDrift   = splinePath.GetDirection(currentProgress);
         Vector3 dirAheadDrift = splinePath.GetDirection(currentProgress + 0.005f);
@@ -232,7 +252,7 @@ public class AIRacer : MonoBehaviour
 
         lastContactTime = Time.time;
 
-        // Push the player away
+        // Push the player away with a strong impulse
         Rigidbody playerRb = other.GetComponentInParent<Rigidbody>();
         if (playerRb != null)
         {
@@ -252,6 +272,26 @@ public class AIRacer : MonoBehaviour
 
         // Slow down AI on impact
         currentSpeed *= aiSlowdownOnHit;
+    }
+
+    /// <summary>Continuous repulsion while the player is inside the AI trigger.</summary>
+    private void OnTriggerStay(Collider other)
+    {
+        SpeeederController player = other.GetComponentInParent<SpeeederController>();
+        if (player == null) return;
+
+        Rigidbody playerRb = other.GetComponentInParent<Rigidbody>();
+        if (playerRb != null)
+        {
+            Vector3 pushDirection = (player.transform.position - transform.position);
+            pushDirection.y = 0f;
+            if (pushDirection.sqrMagnitude < 0.01f)
+                pushDirection = transform.right;
+            pushDirection.Normalize();
+
+            // Continuous push — weaker than initial impact but persistent
+            playerRb.AddForce(pushDirection * (playerPushForce * 0.6f), ForceMode.Acceleration);
+        }
     }
 
     /// <summary>Returns the current normalized progress on the circuit (0 to 1).</summary>

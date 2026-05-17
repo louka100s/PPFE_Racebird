@@ -5,6 +5,7 @@ using UnityEngine.UI;
 /// <summary>
 /// Placed on the player Speeder. Detects trigger overlaps with AI vehicles,
 /// exchanges collision damage via VehicleHealth and provides visual + audio feedback.
+/// Uses OnTriggerStay for continuous push-back to prevent pass-through.
 /// </summary>
 [RequireComponent(typeof(VehicleHealth))]
 public class CollisionDetector : MonoBehaviour
@@ -19,45 +20,115 @@ public class CollisionDetector : MonoBehaviour
     [SerializeField] private float destroyVolume = 1.5f;
 
     [Header("Cooldown")]
-    [SerializeField] private float collisionCooldown = 0.5f;
+    [SerializeField] private float damageCooldown = 0.5f;
+    [SerializeField] private float soundCooldown  = 0.3f;
 
-    private float     lastCollisionTime = -10f;
+    [Header("Push Force")]
+    [Tooltip("Initial impulse force on first contact.")]
+    [SerializeField] private float impactPushForce = 25f;
+    [Tooltip("Continuous repulsion force while overlapping.")]
+    [SerializeField] private float separationForce = 40f;
+    [Tooltip("Upward component added to prevent clipping under the AI.")]
+    [SerializeField] private float separationLift  = 2f;
+
+    private float     lastDamageTime = -10f;
+    private float     lastSoundTime  = -10f;
     private Coroutine flashRoutine;
+    private Rigidbody cachedRb;
+
+    private void Awake()
+    {
+        cachedRb = GetComponent<Rigidbody>();
+    }
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log("Trigger detected with: " + other.gameObject.name);
-
-        if (Time.time - lastCollisionTime < collisionCooldown) return;
-
         VehicleHealth otherHealth = other.GetComponentInParent<VehicleHealth>();
         if (otherHealth == null || otherHealth.IsDead()) return;
 
         VehicleHealth myHealth = GetComponent<VehicleHealth>();
         if (myHealth == null || myHealth.IsDead()) return;
 
-        lastCollisionTime = Time.time;
+        // Strong initial push on first contact
+        ApplyPush(other, impactPushForce);
 
-        float mySpeed    = myHealth.GetCurrentSpeed();
-        float otherSpeed = otherHealth.GetCurrentSpeed();
+        // Damage with cooldown
+        if (Time.time - lastDamageTime >= damageCooldown)
+        {
+            lastDamageTime = Time.time;
 
-        Debug.Log($"COLLISION: My speed={mySpeed:F1}  Other speed={otherSpeed:F1}");
+            float mySpeed    = myHealth.GetCurrentSpeed();
+            float otherSpeed = otherHealth.GetCurrentSpeed();
 
-        Vector3 contactPoint = other.ClosestPoint(transform.position);
+            Vector3 contactPoint = other.ClosestPoint(transform.position);
 
-        otherHealth.TakeCollisionDamage(mySpeed,    otherSpeed, contactPoint);
-        myHealth.TakeCollisionDamage   (otherSpeed, mySpeed,    contactPoint);
+            otherHealth.TakeCollisionDamage(mySpeed,    otherSpeed, contactPoint);
+            myHealth.TakeCollisionDamage   (otherSpeed, mySpeed,    contactPoint);
+
+            SpawnImpactParticles(contactPoint);
+        }
+
+        // Sound with its own cooldown
+        PlayCrashSound();
+
+        if (flashRoutine != null) StopCoroutine(flashRoutine);
+        flashRoutine = StartCoroutine(FlashScreen());
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        VehicleHealth otherHealth = other.GetComponentInParent<VehicleHealth>();
+        if (otherHealth == null || otherHealth.IsDead()) return;
+
+        VehicleHealth myHealth = GetComponent<VehicleHealth>();
+        if (myHealth == null || myHealth.IsDead()) return;
+
+        // Continuous push to prevent overlapping
+        ApplyPush(other, separationForce);
+
+        // Apply damage periodically while overlapping
+        if (Time.time - lastDamageTime >= damageCooldown)
+        {
+            lastDamageTime = Time.time;
+
+            float mySpeed    = myHealth.GetCurrentSpeed();
+            float otherSpeed = otherHealth.GetCurrentSpeed();
+
+            Vector3 contactPoint = other.ClosestPoint(transform.position);
+
+            otherHealth.TakeCollisionDamage(mySpeed,    otherSpeed, contactPoint);
+            myHealth.TakeCollisionDamage   (otherSpeed, mySpeed,    contactPoint);
+        }
+    }
+
+    /// <summary>Pushes the player away from the other collider.</summary>
+    private void ApplyPush(Collider other, float force)
+    {
+        if (cachedRb == null) return;
+
+        Vector3 pushDir = transform.position - other.transform.position;
+        pushDir.y = 0f;
+
+        if (pushDir.sqrMagnitude < 0.01f)
+            pushDir = transform.right;
+
+        pushDir.Normalize();
+        pushDir.y = separationLift * 0.1f;
+
+        cachedRb.AddForce(pushDir * force, ForceMode.Acceleration);
+    }
+
+    /// <summary>Plays a crash sound with its own cooldown to avoid spam.</summary>
+    private void PlayCrashSound()
+    {
+        if (Time.time - lastSoundTime < soundCooldown) return;
+        lastSoundTime = Time.time;
 
         if (crashSounds != null && crashSounds.Length > 0)
         {
             AudioClip clip = crashSounds[Random.Range(0, crashSounds.Length)];
             AudioSource.PlayClipAtPoint(clip, transform.position, crashVolume);
         }
-
-        if (flashRoutine != null) StopCoroutine(flashRoutine);
-        flashRoutine = StartCoroutine(FlashScreen());
-
-        SpawnImpactParticles(contactPoint);
     }
 
     /// <summary>Spawns a quick burst of impact particles at the given world position.</summary>
